@@ -14,12 +14,13 @@ from datetime import datetime
 from decouple import config
 from random import choice
 from conv import random_text
+from online import get_ip_address ,search_on_google, search_on_wikipedia, youtube
 # from online import find_my_ip, search_on_google, search_on_wikipedia, youtube, send_email, get_news, weather_forecast
 
 # Initialize the text-to-speech engine
 engine = pyttsx3.init('sapi5')
 engine.setProperty('volume', 1.5)
-engine.setProperty('rate', 210)
+engine.setProperty('rate', 230)
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
 
@@ -112,3 +113,22 @@ if __name__ == '__main__':
                 notepad_path="C:\\Windows\\notepad.exe"
                 os.startfile(notepad_path)    
 
+            elif "tell me ip address" in query:
+                ip=get_ip_address()
+                speak(f"your ip address is{ip}")
+                
+            elif "youtube"in query:
+                speak("sharry what do you want to play")
+                video=take_command().lower()
+                youtube(video)
+
+            elif "open wikipedia"in query:
+                speak("What do you want to search")
+                query=take_command().lower()
+                search_on_wikipedia(query)   
+                speak("According to wikipedia,{results}")
+
+            elif "open google"in query:
+                speak("sharry What do you want to search")
+                query=take_command().lower()
+                search_on_google(query)   
