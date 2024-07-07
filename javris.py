@@ -9,12 +9,15 @@ import wolframalpha
 import pyautogui
 import webbrowser
 import time
-
+import shutil
+import psutil
 from datetime import datetime
 from decouple import config
 from random import choice
+import speedtest
 from conv import random_text
-from online import find_my_ip, search_on_google, search_on_wikipedia, youtube, send_email, get_news, weather_forecast
+import wikipedia
+import pywhatkit as kit
 
 engine = pyttsx3.init('sapi5')
 engine.setProperty('volume', 1.5)
@@ -25,11 +28,9 @@ engine.setProperty('voice', voices[1].id)
 USER = config('USER')
 HOSTNAME = config('BOT')
 
-
 def speak(text):
     engine.say(text)
     engine.runAndWait()
-
 
 def greet_me():
     hour = datetime.now().hour
@@ -39,27 +40,22 @@ def greet_me():
         speak(f"Good afternoon {USER}")
     elif (hour >= 16) and (hour < 19):
         speak(f"Good evening {USER}")
-    speak(f"I am {HOSTNAME}. How may i assist you? {USER}")
-
+    speak(f"I am {HOSTNAME}. How may I assist you? {USER}")
 
 listening = False
-
 
 def start_listening():
     global listening
     listening = True
-    print("started listening ")
-
+    print("Started listening")
 
 def pause_listening():
     global listening
     listening = False
-    print("stopped listening")
-
+    print("Stopped listening")
 
 keyboard.add_hotkey('ctrl+alt+k', start_listening)
 keyboard.add_hotkey('ctrl+alt+p', pause_listening)
-
 
 def take_command():
     r = sr.Recognizer()
@@ -69,23 +65,150 @@ def take_command():
         audio = r.listen(source)
 
     try:
-        print("Recognizing....")
-        queri = r.recognize_google(audio, language='en-in')
-        print(queri)
-        if not 'stop' in queri or 'exit' in queri:
+        print("Recognizing...")
+        query = r.recognize_google(audio, language='en-in')
+        print(query)
+        if 'stop' not in query and 'exit' not in query:
             speak(choice(random_text))
         else:
             hour = datetime.now().hour
-            if hour >= 21 and hour < 6:
-                speak("Good night sir,take care!")
+            if 21 <= hour < 6:
+                speak("Good night sir, take care!")
             else:
                 speak("Have a good day sir!")
             exit()
-
     except Exception:
-        speak("Sorry I couldn't understand. Can you please repeat that?")
-        queri = 'None'
-    return queri
+        speak("Sorry, I couldn't understand. Can you please repeat that?")
+        query = 'None'
+    return query
+
+def find_my_ip():
+    ip_address = requests.get('https://api64.ipify.org?format=json').json()
+    return ip_address["ip"]
+
+def search_on_wikipedia(query):
+    results = wikipedia.summary(query, sentences=2)
+    return results
+
+def search_on_google(query):
+    kit.search(query)
+
+def youtube(video):
+    kit.playonyt(video)
+
+def get_news():
+    news_headline = []
+    result = requests.get(f"https://newsapi.org/v2/top-headlines?country=in&category=general&apiKey=YOUR_API_KEY").json()
+    articles = result["articles"]
+    for article in articles:
+        news_headline.append(article["title"])
+    return news_headline[:6]
+
+def weather_forecast(city):
+    res = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=YOUR_API_KEY&units=metric").json()
+    weather = res["weather"][0]["main"]
+    temp = res["main"]["temp"]
+    feels_like = res["main"]["feels_like"]
+    return weather, f"{temp}°C", f"{feels_like}°C"
+
+def screenshot():
+    img = pyautogui.screenshot()
+    img.save(f"screenshot_{time.time()}.png")
+
+def screen_recording():
+    sp.run('start microsoft.windows.camera:', shell=True)
+    
+def put_pc_to_sleep():
+    os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+
+
+def internet_speed_test():
+    st = speedtest.Speedtest()
+    download_speed = st.download() / 10**6
+    upload_speed = st.upload() / 10**6
+    speak(f"Download speed is {download_speed:.2f} Mbps, Upload speed is {upload_speed:.2f} Mbps")
+
+def find_my_ip():
+    ip_address = requests.get('https://api64.ipify.org?format=json').json()
+    return ip_address["ip"]
+
+def search_on_wikipedia(query):
+    results = wikipedia.summary(query, sentences=2)
+    return results
+
+def search_on_google(query):
+    kit.search(query)
+
+def youtube(video):
+    kit.playonyt(video)
+
+def get_news():
+    news_headline = []
+    result = requests.get(f"https://newsapi.org/v2/top-headlines?country=in&category=general&apiKey=YOUR_API_KEY").json()
+    articles = result["articles"]
+    for article in articles:
+        news_headline.append(article["title"])
+    return news_headline[:6]
+
+def weather_forecast(city):
+    res = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=YOUR_API_KEY&units=metric").json()
+    weather = res["weather"][0]["main"]
+    temp = res["main"]["temp"]
+    feels_like = res["main"]["feels_like"]
+    return weather, f"{temp}°C", f"{feels_like}°C"
+
+def screenshot():
+    img = pyautogui.screenshot()
+    img.save(f"screenshot_{time.time()}.png")
+
+def screen_recording():
+    print("Press 'ctrl+shift+s' to start screen recording and 'ctrl+shift+q' to stop screen recording.")
+
+    while True:
+        if keyboard.is_pressed('ctrl+shift+s'):
+            print("Starting screen recording")
+            # Open the Xbox Game Bar
+            sp.run('start shell:AppsFolder\\Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App', shell=True)
+            time.sleep(2)  # Give it some time to open
+
+            # Press Win + Alt + R to start recording
+            pyautogui.hotkey('win', 'alt', 'r')
+            time.sleep(2)  # Give it some time to start recording
+            break
+
+    while True:
+        if keyboard.is_pressed('ctrl+shift+q'):
+            print("Stopping screen recording")
+            # Press Win + Alt + R to stop recording
+            pyautogui.hotkey('win', 'alt', 'r')
+            break
+    
+def put_pc_to_sleep():
+    os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+
+def file_management(operation, source, destination):
+    if operation == 'copy':
+        shutil.copy(source, destination)
+    elif operation == 'move':
+        shutil.move(source, destination)
+    elif operation == 'rename':
+        os.rename(source, destination)
+    elif operation == 'delete':
+        os.remove(source)
+
+def search_files(filename):
+    for root, dirs, files in os.walk("C:\\"):
+        if filename in files:
+            return os.path.join(root, filename)
+    return "File not found"
+
+
+def internet_speed_test():
+    st = speedtest.Speedtest()
+    download_speed = st.download() / 10**6
+    upload_speed = st.upload() / 10**6
+    return download_speed, upload_speed
+
 
 
 if __name__ == '__main__':
@@ -94,7 +217,7 @@ if __name__ == '__main__':
         if listening:
             query = take_command().lower()
             if "how are you" in query:
-                speak("I am absolutely fine sir. What about you")
+                speak("I am absolutely fine sir. What about you?")
 
             elif "open command prompt" in query:
                 speak("Opening command prompt")
@@ -109,64 +232,39 @@ if __name__ == '__main__':
                 notepad_path = "C:\\Users\\ASUS\\AppData\\Local\\Microsoft\\WindowsApps\\notepad.exe"
                 os.startfile(notepad_path)
 
-            elif "open discord" in query:
-                speak("Opening Discord for you sir")
-                discord_path = "C:\\Users\\ASUS\\AppData\\Local\\Discord\\app-1.0.9028\\Discord.exe"
-                os.startfile(discord_path)
-
-            elif "open gta" in query:
-                speak("Opening Gta for you sir")
-                gta_path = "D:\\Tanishq\\GTA\\Launcher.exe"
-                os.startfile(gta_path)
-
             elif 'ip address' in query:
                 ip_address = find_my_ip()
-                speak(
-                    f'Your IP Address is {ip_address}.\n For your convenience, I am printing it on the screen sir.')
+                speak(f'Your IP Address is {ip_address}.\n For your convenience, I am printing it on the screen sir.')
                 print(f'Your IP Address is {ip_address}')
 
             elif "open youtube" in query:
-                speak("What do you want to play on youtube sir?")
+                speak("What do you want to play on YouTube sir?")
                 video = take_command().lower()
                 youtube(video)
 
             elif "open google" in query:
-                speak(f"What do you want to search on google {USER}")
-                query = take_command().lower()
-                search_on_google(query)
+                speak(f"What do you want to search on Google {USER}?")
+                search_query = take_command().lower()
+                search_on_google(search_query)
 
             elif "wikipedia" in query:
-                speak("what do you want to search on wikipedia sir?")
+                speak("What do you want to search on Wikipedia sir?")
                 search = take_command().lower()
                 results = search_on_wikipedia(search)
-                speak(f"According to wikipedia,{results}")
-                speak("I am printing in on terminal")
+                speak(f"According to Wikipedia, {results}")
+                speak("I am printing it on the terminal")
                 print(results)
 
-
-            elif "send an email" in query:
-                speak("On what email address do you want to send sir?. Please enter in the terminal")
-                receiver_add = input("Email address:")
-                speak("What should be the subject sir?")
-                subject = take_command().capitalize()
-                speak("What is the message ?")
-                message = take_command().capitalize()
-                if send_email(receiver_add, subject, message):
-                    speak("I have sent the email sir")
-                    print("I have sent the email sir")
-                else:
-                    speak("something went wrong Please check the error log")
-
             elif "give me news" in query:
-                speak(f"I am reading out the latest headline of today,sir")
+                speak(f"I am reading out the latest headlines of today, sir")
                 speak(get_news())
-                speak("I am printing it on screen sir")
+                speak("I am printing it on the screen sir")
                 print(*get_news(), sep='\n')
 
             elif 'weather' in query:
                 ip_address = find_my_ip()
-                speak("tell me the name of your city")
-                city = input("Enter name of your city")
+                speak("Tell me the name of your city")
+                city = input("Enter the name of your city: ")
                 speak(f"Getting weather report for your city {city}")
                 weather, temp, feels_like = weather_forecast(city)
                 speak(f"The current temperature is {temp}, but it feels like {feels_like}")
@@ -174,85 +272,33 @@ if __name__ == '__main__':
                 speak("For your convenience, I am printing it on the screen sir.")
                 print(f"Description: {weather}\nTemperature: {temp}\nFeels like: {feels_like}")
 
-            elif "movie" in query:
-                movies_db = imdb.IMDb()
-                speak("Please tell me the movie name:")
-                text = take_command()
-                movies = movies_db.search_movie(text)
-                speak("searching for" + text)
-                speak("I found these")
-                for movie in movies:
-                    title = movie["title"]
-                    year = movie["year"]
-                    speak(f"{title}-{year}")
-                    info = movie.getID()
-                    movie_info = movies_db.get_movie(info)
-                    rating = movie_info["rating"]
-                    cast = movie_info["cast"]
-                    actor = cast[0:5]
-                    plot = movie_info.get('plot outline', 'plot summary not available')
-                    speak(f"{title} was released in {year} has imdb ratings of {rating}.It has a cast of {actor}. "
-                          f"The plot summary of movie is {plot}")
+            elif "take a screenshot" in query:
+                screenshot()
+                speak("Screenshot taken")
 
-                    print(f"{title} was released in {year} has imdb ratings of {rating}.\n It has a cast of {actor}. \n"
-                          f"The plot summary of movie is {plot}")
+            elif "start screen recording" in query:
+                screen_recording()
+                speak("Starting screen recording")
 
+            elif "search file" in query:
+                speak("What is the name of the file you are looking for?")
+                filename = take_command().lower()
+                filepath = search_files(filename)
+                speak(filepath)
+                print(filepath)
 
-            elif "calculate" in query:
-                app_id = ""
-                client = wolframalpha.Client(app_id)
-                ind = query.lower().split().index("calculate")
-                text = query.split()[ind + 1:]
-                result = client.query(" ".join(text))
-                try:
-                    ans = next(result.results).text
-                    speak("The answer is " + ans)
-                    print("The answer is " + ans)
-                except StopIteration:
-                    speak("I couldn't find that . Please try again")
+            elif "sleep" in query:
+                put_pc_to_sleep()
+                speak("Putting the PC to sleep")
 
+            elif "file operation" in query:
+                speak("What operation do you want to perform? (copy, move, rename, delete)")
+                operation = take_command().lower()
+                speak("Please provide the source path")
+                source = input("Source path: ")
+                speak("Please provide the destination path")
+                destination = input("Destination path: ")
+                file_management(operation, source, destination)
 
-            # elif 'what is' in query or 'who is' in query or 'which is' in query:
-            #     app_id = ""
-            #     client = wolframalpha.Client(app_id)
-            #     try:
-
-            #         ind = query.lower().index('what is') if 'what is' in query.lower() else \
-            #             query.lower().index('who is') if 'who is' in query.lower() else \
-            #                 query.lower().index('which is') if 'which is' in query.lower() else None
-
-            #         if ind is not None:
-            #             text = query.split()[ind + 2:]
-            #             res = client.query(" ".join(text))
-            #             ans = next(res.results).text
-            #             speak("The answer is " + ans)
-            #             print("The answer is " + ans)
-            #         else:
-            #             speak("I couldn't find that. Please try again.")
-            #     except StopIteration:
-            #         speak("I couldn't find that. Please try again.")
-
-            elif 'subscribe' in query:
-                speak(
-                    "Everyone who are watching this video, Please subscribe for more amazing content from error by "
-                    "night. I will show you how to do this")
-                speak("Firstly Go to youtube")
-                webbrowser.open("https://www.youtube.com/")
-                speak("click on the search bar")
-                pyautogui.moveTo(806, 125, 1)
-                pyautogui.click(x=806, y=125, clicks=1, interval=0, button='left')
-                speak("Error by night")
-                pyautogui.typewrite("Error by night", 0.1)
-                time.sleep(1)
-                speak("press enter")
-                pyautogui.press('enter')
-                pyautogui.moveTo(971, 314, 1)
-                speak("Here you will see our channel")
-                pyautogui.moveTo(1688, 314, 1)
-                speak("click here to subscribe our channel")
-                pyautogui.click(x=1688, y=314, clicks=1, interval=0, button='left')
-                speak("And also Don't forget to press the bell icon")
-                pyautogui.moveTo(1750, 314, 1)
-                pyautogui.click(x=1750, y=314, clicks=1, interval=0, button='left')
-                speak("turn on all notifications")
-                pyautogui.click(x=1750, y=320, clicks=1, interval=0, button='left')
+            elif "internet speed test" in query:
+                internet_speed_test()
