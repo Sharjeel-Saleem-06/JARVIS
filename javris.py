@@ -15,7 +15,6 @@ from datetime import datetime
 from decouple import config
 from random import choice
 import speedtest
-from conv import random_text
 import wikipedia
 import pywhatkit as kit
 
