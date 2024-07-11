@@ -171,7 +171,7 @@ def screen_recording():
             sp.run('start shell:AppsFolder\\Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App', shell=True)
             time.sleep(2)  # Give it some time to open
 
-            # Press Win + Alt + R to start recording
+            # Press Win + Alt + R to start recordingg
             pyautogui.hotkey('win', 'alt', 'r')
             time.sleep(2)  # Give it some time to start recording
             break
