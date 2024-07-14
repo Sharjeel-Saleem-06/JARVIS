@@ -1,36 +1,40 @@
-import pyttsx3
-import requests
-import speech_recognition as sr
-import keyboard
-import os
-import subprocess as sp
-import imdb
-import wolframalpha
-import pyautogui
-import webbrowser
-import time
-import shutil
-import psutil
-from datetime import datetime
-from decouple import config
-from random import choice
-import speedtest
-import wikipedia
-import pywhatkit as kit
+import socket
+import pyttsx3  # Text-to-speech conversion library
+import requests  # Library to make HTTP requests
+import speech_recognition as sr  # Library for performing speech recognition
+import keyboard  # Module for detecting keyboard events
+import os  # Provides functions for interacting with the operating system
+import subprocess as sp  # Subprocess management module
+import imdb  # IMDB API client library
+import wolframalpha  # WolframAlpha API client library
+import pyautogui  # Library to control the mouse and keyboard
+import webbrowser  # Library to open URLs in the browser
+import time  # Time-related functions
+import psutil  # System and process utilities
+from datetime import datetime  # Date and time functions
+from decouple import config  # Library to read configuration from .env file
+from random import choice  # Library for generating random selections
+import speedtest  # Library to test internet speed
+import pywhatkit as kit  # Library to send WhatsApp messages and perform various operations
 
+# Initialize the text-to-speech engine
 engine = pyttsx3.init('sapi5')
-engine.setProperty('volume', 1.5)
-engine.setProperty('rate', 220)
+engine.setProperty('volume', 1.5)  # Set the volume
+engine.setProperty('rate', 220)  # Set the speech rate
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
+engine.setProperty('voice', voices[1].id)  # Set the voice
 
+# Read user and bot name from .env file
 USER = config('USER')
 HOSTNAME = config('BOT')
+random_text='ok'
 
+# Function to convert text to speech and play it
 def speak(text):
     engine.say(text)
     engine.runAndWait()
 
+# Function to greet the user based on the time of day
 def greet_me():
     hour = datetime.now().hour
     if (hour >= 6) and (hour < 12):
@@ -41,31 +45,36 @@ def greet_me():
         speak(f"Good evening {USER}")
     speak(f"I am {HOSTNAME}. How may I assist you? {USER}")
 
+# Variable to track if the application is listening
 listening = False
 
+# Function to start listening for commands
 def start_listening():
     global listening
     listening = True
     print("Started listening")
 
+# Function to stop listening for commands
 def pause_listening():
     global listening
     listening = False
     print("Stopped listening")
 
+# Assign hotkeys to start and stop listening
 keyboard.add_hotkey('ctrl+alt+k', start_listening)
 keyboard.add_hotkey('ctrl+alt+p', pause_listening)
 
+# Function to take a voice command from the user
 def take_command():
     r = sr.Recognizer()
     with sr.Microphone() as source:
         print("Listening...")
-        r.pause_threshold = 1
-        audio = r.listen(source)
+        r.pause_threshold = 1  # Adjusts the pause threshold for speech recognition
+        audio = r.listen(source)  # Listens for the user's input
 
     try:
         print("Recognizing...")
-        query = r.recognize_google(audio, language='en-in')
+        query = r.recognize_google(audio, language='en-in')  # Recognizes the speech using Google API
         print(query)
         if 'stop' not in query and 'exit' not in query:
             speak(choice(random_text))
@@ -81,66 +90,32 @@ def take_command():
         query = 'None'
     return query
 
+# Function to find the user's IP address
 def find_my_ip():
-    ip_address = requests.get('https://api64.ipify.org?format=json').json()
-    return ip_address["ip"]
-
-def search_on_wikipedia(query):
-    results = wikipedia.summary(query, sentences=2)
-    return results
-
-def search_on_google(query):
-    kit.search(query)
-
-def youtube(video):
-    kit.playonyt(video)
-
-def get_news():
-    news_headline = []
-    result = requests.get(f"https://newsapi.org/v2/top-headlines?country=in&category=general&apiKey=YOUR_API_KEY").json()
-    articles = result["articles"]
-    for article in articles:
-        news_headline.append(article["title"])
-    return news_headline[:6]
-
-def weather_forecast(city):
-    res = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=YOUR_API_KEY&units=metric").json()
-    weather = res["weather"][0]["main"]
-    temp = res["main"]["temp"]
-    feels_like = res["main"]["feels_like"]
-    return weather, f"{temp}°C", f"{feels_like}°C"
-
-def screenshot():
-    img = pyautogui.screenshot()
-    img.save(f"screenshot_{time.time()}.png")
-
-def screen_recording():
-    sp.run('start microsoft.windows.camera:', shell=True)
+    try:
+        # Use the socket library to get the IP address
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+    except Exception as e:
+        ip_address = "Unable to get IP Address"
+        print(f"Error: {e}")
     
-def put_pc_to_sleep():
-    os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+    return ip_address
 
-
-def internet_speed_test():
-    st = speedtest.Speedtest()
-    download_speed = st.download() / 10**6
-    upload_speed = st.upload() / 10**6
-    speak(f"Download speed is {download_speed:.2f} Mbps, Upload speed is {upload_speed:.2f} Mbps")
-
-def find_my_ip():
-    ip_address = requests.get('https://api64.ipify.org?format=json').json()
-    return ip_address["ip"]
-
+# Function to search for a query on Wikipedia
 def search_on_wikipedia(query):
     results = wikipedia.summary(query, sentences=2)
     return results
 
+# Function to search for a query on Google
 def search_on_google(query):
     kit.search(query)
 
+# Function to play a YouTube video
 def youtube(video):
     kit.playonyt(video)
 
+# Function to get the latest news headlines
 def get_news():
     news_headline = []
     result = requests.get(f"https://newsapi.org/v2/top-headlines?country=in&category=general&apiKey=YOUR_API_KEY").json()
@@ -149,6 +124,7 @@ def get_news():
         news_headline.append(article["title"])
     return news_headline[:6]
 
+# Function to get the weather forecast for a city
 def weather_forecast(city):
     res = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid=YOUR_API_KEY&units=metric").json()
     weather = res["weather"][0]["main"]
@@ -156,21 +132,22 @@ def weather_forecast(city):
     feels_like = res["main"]["feels_like"]
     return weather, f"{temp}°C", f"{feels_like}°C"
 
+# Function to take a screenshot
 def screenshot():
     img = pyautogui.screenshot()
     img.save(f"screenshot_{time.time()}.png")
 
+# Function to start screen recording using Xbox Game Bar
 def screen_recording():
     print("Press 'ctrl+shift+s' to start screen recording and 'ctrl+shift+q' to stop screen recording.")
 
     while True:
         if keyboard.is_pressed('ctrl+shift+s'):
             print("Starting screen recording")
-            # Open the Xbox Game Bar
             sp.run('start shell:AppsFolder\\Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App', shell=True)
             time.sleep(2)  # Give it some time to open
 
-            # Press Win + Alt + R to start recordingg
+            # Press Win + Alt + R to start recording
             pyautogui.hotkey('win', 'alt', 'r')
             time.sleep(2)  # Give it some time to start recording
             break
@@ -181,10 +158,12 @@ def screen_recording():
             # Press Win + Alt + R to stop recording
             pyautogui.hotkey('win', 'alt', 'r')
             break
-    
+
+# Function to put the PC to sleep
 def put_pc_to_sleep():
     os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
 
+# Function to manage files (copy, move, rename, delete)
 def file_management(operation, source, destination):
     if operation == 'copy':
         shutil.copy(source, destination)
@@ -195,21 +174,21 @@ def file_management(operation, source, destination):
     elif operation == 'delete':
         os.remove(source)
 
+# Function to search for a file in the system
 def search_files(filename):
     for root, dirs, files in os.walk("C:\\"):
         if filename in files:
             return os.path.join(root, filename)
     return "File not found"
 
-
+# Function to test internet speed
 def internet_speed_test():
     st = speedtest.Speedtest()
     download_speed = st.download() / 10**6
     upload_speed = st.upload() / 10**6
     return download_speed, upload_speed
 
-
-
+# Main function to start the assistant
 if __name__ == '__main__':
     greet_me()
     while True:
@@ -246,30 +225,6 @@ if __name__ == '__main__':
                 search_query = take_command().lower()
                 search_on_google(search_query)
 
-            elif "wikipedia" in query:
-                speak("What do you want to search on Wikipedia sir?")
-                search = take_command().lower()
-                results = search_on_wikipedia(search)
-                speak(f"According to Wikipedia, {results}")
-                speak("I am printing it on the terminal")
-                print(results)
-
-            elif "give me news" in query:
-                speak(f"I am reading out the latest headlines of today, sir")
-                speak(get_news())
-                speak("I am printing it on the screen sir")
-                print(*get_news(), sep='\n')
-
-            elif 'weather' in query:
-                ip_address = find_my_ip()
-                speak("Tell me the name of your city")
-                city = input("Enter the name of your city: ")
-                speak(f"Getting weather report for your city {city}")
-                weather, temp, feels_like = weather_forecast(city)
-                speak(f"The current temperature is {temp}, but it feels like {feels_like}")
-                speak(f"Also, the weather report talks about {weather}")
-                speak("For your convenience, I am printing it on the screen sir.")
-                print(f"Description: {weather}\nTemperature: {temp}\nFeels like: {feels_like}")
 
             elif "take a screenshot" in query:
                 screenshot()
@@ -290,14 +245,6 @@ if __name__ == '__main__':
                 put_pc_to_sleep()
                 speak("Putting the PC to sleep")
 
-            elif "file operation" in query:
-                speak("What operation do you want to perform? (copy, move, rename, delete)")
-                operation = take_command().lower()
-                speak("Please provide the source path")
-                source = input("Source path: ")
-                speak("Please provide the destination path")
-                destination = input("Destination path: ")
-                file_management(operation, source, destination)
 
             elif "internet speed test" in query:
                 internet_speed_test()
